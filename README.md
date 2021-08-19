@@ -13,7 +13,7 @@ Linux:
 
 Windows:
 
-​			C++ code needs to be compiled.
+​			C++ code (Genetic Algorithm for Traveling Salesman Problem) needs to be compiled.
 
 ​			Follow the link : https://github.com/sugia/GA-for-TSP
 
