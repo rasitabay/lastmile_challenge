@@ -9,7 +9,7 @@ Install:
 
 Linux:
 
-- Scripts should work out-of-box.
+- Scripts should work out-of-the-box.
 
 Windows:
 
