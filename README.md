@@ -17,3 +17,8 @@ Windows:
 
 ​			Follow the link : https://github.com/sugia/GA-for-TSP
 
+Contributors:
+
+Okan Arslan
+Rasit Abay
+
