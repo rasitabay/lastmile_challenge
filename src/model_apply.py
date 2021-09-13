@@ -38,14 +38,11 @@ GA_path = path.join(BASE_DIR, 'src/code')
 ###########################################################################################
 bigM = 99999999                 # a very large number
 # following paramaters help discourage the driver to visit other nodes
-a1 = 1/10
-a2 = 5/10
-a4 = 50/10
-a5 = 150/10
-b = 1/10  
-distMultiplier = 10
-returnArcLengthMultiplier = 0
-
+a1 = 1
+a2 = 10
+a3 = 100
+depotArc_From = 1
+depotArc_To = 0
 # Read data files 
 ###########################################################################################
 # Only the route and travel times are read. Our method does not require package data.
@@ -114,51 +111,44 @@ def penalty(zone1, zone2,node,i,depot,route):
             rkm22 = res[0]
             hrf2 = res[1]
 
-            toplamAyni = 0
+            similarityIndex = 0
             if rkm11==rkm21:
-                toplamAyni += 1
+                similarityIndex += 1
             if rkm12==rkm22:
-                toplamAyni += 1
+                similarityIndex += 1
             if hrf1==hrf2:
-                toplamAyni += 1
+                similarityIndex += 1
 
             if P1==P2:
-                if toplamAyni == 3:
+                if similarityIndex == 3:
                     return a1
-                if toplamAyni == 2:
+                if similarityIndex == 2:
                     return a2
-            else:
-                return a4
-            
-            return a5
+            return a3
         else:
 
-            newCeza = b
-            if node==depot or i==depot:
-                return b
-            else:
-                # Neither is depot. Either of the nodes could be "nan"
+            # Neither is depot. Either of the nodes could be "nan"
 
-                zoneNew1 = zone1
-                zoneNew2 = zone2
-                which_node1 = node
-                which_node2 = i
+            zoneNew1 = zone1
+            zoneNew2 = zone2
+            which_node1 = node
+            which_node2 = i
 
-                if not isinstance(zone1, str):
-                    which_node1 = closestNode(route, node)
-                    zoneNew1 = dataRoute[route].get('stops').get(which_node1).get('zone_id')
-                
-                if not isinstance(zone2, str):               
-                    which_node2 = closestNode(route, i)
-                    zoneNew2 = dataRoute[route].get('stops').get(which_node2).get('zone_id')
+            if not isinstance(zone1, str):
+                which_node1 = closestNode(route, node)
+                zoneNew1 = dataRoute[route].get('stops').get(which_node1).get('zone_id')
+            
+            if not isinstance(zone2, str):               
+                which_node2 = closestNode(route, i)
+                zoneNew2 = dataRoute[route].get('stops').get(which_node2).get('zone_id')
 
-                newCeza = penalty(zoneNew1, zoneNew2, which_node1, which_node2, depot, route)
+            newPenalty = penalty(zoneNew1, zoneNew2, which_node1, which_node2, depot, route)
 
-            return newCeza
+            return newPenalty
             
     except:
         print("Error reading zones -", zone1, " ", zone2, " ",node, " ",i, " ",depot, " ",route)
-        return a5
+        return a3
 
 
 # This procedure transforms the distance matrix,
@@ -208,23 +198,28 @@ for route in dataRoute:
             metin+=str('\t')            
         jj = 0        
         for i in dataTravel[route].get(node).keys():
-            dist = dataTravel[route].get(node).get(i)
-            ceza = 1
-            if node != i:
-                zone1 = dataRoute[route].get('stops').get(node).get('zone_id')
-                zone2 = dataRoute[route].get('stops').get(i).get('zone_id')                
-                ceza = penalty(zone1,zone2,node,i,depot,route)
-            if i==depot:
-                dist = returnArcLengthMultiplier * dist
-
             if node == i:
                 mat[ii, jj] = -bigM
                 metin+=str(-bigM)
             else:
-                val = int(distMultiplier * dist * ceza) 
-                mat[ii, jj] = val
-                metin+=str(val)
-            
+                dist = dataTravel[route].get(node).get(i)
+                if i==depot:
+                    val = (depotArc_To * dist)
+                    mat[ii, jj] = val
+                    metin+=str(val)
+                elif node==depot:
+                    val = (depotArc_From * dist)
+                    mat[ii, jj] = val
+                    metin+=str(val)
+                else:                   
+                    dist = dataTravel[route].get(node).get(i)
+                    myPenalty = 1
+                    zone1 = dataRoute[route].get('stops').get(node).get('zone_id')
+                    zone2 = dataRoute[route].get('stops').get(i).get('zone_id')                
+                    myPenalty = penalty(zone1,zone2,node,i,depot,route)
+                    val = (dist * myPenalty) 
+                    mat[ii, jj] = val
+                    metin+=str(val)            
             metin+=str('\t')
             jj += 1
         lines.append(metin)
@@ -240,7 +235,7 @@ for route in dataRoute:
             if node == i:
                 metin+=str(-bigM)
             else:
-                metin+=str(int(mat[jj, ii]))
+                metin+=str(mat[jj, ii])
             metin+=str('\t')
             jj += 1
 
